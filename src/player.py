@@ -16,7 +16,7 @@ def score_roll(roll: list):
     points = 0
 
     # Special Cases
-    if values == [3, 3]: # Two triplets
+    if values == [3, 3]: # Two triples
         return 2500, 0 
     elif unique_dice == {1, 2, 3, 4, 5, 6}: # 1-6 Straight 
         return 1500, 0  
