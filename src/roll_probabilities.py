@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from math import comb, factorial
@@ -126,7 +127,7 @@ def theoretical_prob_grid():
     plt.xlabel("Number of Dice Rolled")
     plt.ylabel("Type of Roll")
     plt.title("Theoretical Farkle Roll Probabilities")
-    plt.show(block=True)
+    plt.show()
 
 # Simulations for finding estimates of actual probabilities and for finding points vs. no points probabilities
 def categorize_roll(roll: list):
@@ -189,7 +190,7 @@ def roll_sims(sims: int, dice: int):
     """
     roll_counter = {"one": 0, "five": 0, "triple": 0, "four_of_a_kind": 0, "five_of_a_kind": 0, 
                     "six_of_a_kind": 0, "four_with_pair": 0, "three_pairs": 0, "straight": 0, "two_triples": 0}
-    points_occured = {"rolls_with_points": 0, "total_rolls": sims}
+    points_occured = 0
 
     for _ in range(sims):
         rolled_dice = roll(dice)
@@ -199,15 +200,15 @@ def roll_sims(sims: int, dice: int):
             roll_counter[roll_type] += 1
 
         if points_scored:
-            points_occured["rolls_with_points"] += 1
+            points_occured += 1
     
     return roll_counter, points_occured
     
-def simulated_prob_grid():
+def calculate_roll_probabilities():
     """
     Creates a probability grid to visualize the probabilities of 
-    each roll depending on how many dice are being rolled.
-    But uses the simulated rolls.
+    each roll depending on how many dice are being rolled using the simulated rolls.
+    Returns a dataframe for roll type probabilities and a dataframe for probabilities of scoring any points.
     """
     dice_amounts = range(6, 0, -1)
     one = []
@@ -234,23 +235,58 @@ def simulated_prob_grid():
         "two_triples": two_triples,
     }
 
+    roll_with_points_prob = []
+
     rolls = 1_000_000
     for dice in dice_amounts:
-        roll_counter, _ = roll_sims(rolls, dice)
+        roll_counter, rolls_with_points = roll_sims(rolls, dice)
         for key, value in roll_counter.items():
             list_mapping[key].append(value)
+        roll_with_points_prob.append(rolls_with_points / rolls)
     
+    # Make roll probability table
     data = np.array([two_triples, straight, three_pairs, four_with_pair, six_of_a_kind,
                      five_of_a_kind, four_of_a_kind, triple, one, five])
     data = data / rolls
+    y_labels = ["Two Triples", "Straight", "Three Pairs", "Four of a Kind with a Pair", "Six of a Kind",
+                "Five of a Kind", "Four of a Kind", "Three of a Kind", "At least a 1", "At least a 5"]
 
-    plt.figure(figsize=(5, 6)) 
+    roll_type_prob_df = pd.DataFrame(data, y_labels, columns=range(6, 0, -1))
 
-    sns.heatmap(data, annot=True, cmap="viridis", linewidths=0.5, fmt=".2%",
-            xticklabels=range(6, 0, -1), yticklabels=["Two Triples", "Straight", "Three Pairs", "Four of a Kind with a Pair", "Six of a Kind",
-                                                      "Five of a Kind", "Four of a Kind", "Three of a Kind", "At least a 1", "At least a 5"])
+    # Make points scoring probability dataframe
+    points_scoring_prob_df = pd.DataFrame([roll_with_points_prob], ["Probability of Scoring Points"], columns=range(6, 0, -1))
+
+    return roll_type_prob_df, points_scoring_prob_df
+
+def save_prob_dfs(roll_type_prob_df: pd.DataFrame, points_scoring_prob_df: pd.DataFrame):
+    """Saves probability dataframes."""
+    roll_type_prob_df.to_csv("Roll Type Probabilities.csv", index=True)
+    points_scoring_prob_df.to_csv("Probability of Scoring Points.csv", index=True)
+
+# Visuals
+def roll_type_prob_grid(roll_type_prob_df: pd.DataFrame):
+    """
+    Creates a table to visualize the probabilities of each roll occuring 
+    depending on how many dice are being rolled using the simulated rolls.
+    """
+    plt.figure()
+    sns.heatmap(roll_type_prob_df, annot=True, cmap="viridis", linewidths=0.5, fmt=".2%")
    
     plt.xlabel("Number of Dice Rolled")
-    plt.ylabel("Type of Roll")
+    plt.ylabel("Type of Roll", rotation=0)
     plt.title("Simulated Farkle Roll Probabilities")
-    plt.show(block=False)
+    plt.show()
+
+def points_scoring_prob_grid(points_scoring_prob_df: pd.DataFrame):
+    """
+    Creates a table to visualize the probabilities of scoring any kinds of
+    points depending on how many dice are being rolled using the simulated rolls.
+    """
+    plt.figure(figsize=(10, 3))
+    ax = sns.heatmap(points_scoring_prob_df, annot=True, cmap="viridis", linewidths=0.5, fmt=".2%")
+    ax.set_aspect(0.9)
+
+    plt.xlabel("Number of Dice Rolled")
+    plt.yticks(rotation=0) 
+    plt.title("Simulated Farkle Points Scoring Probabilities")
+    plt.show()

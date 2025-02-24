@@ -1,15 +1,24 @@
+import pandas as pd
 from player import Player
 from game import Game
-from roll_probabilities import theoretical_prob_grid, simulated_prob_grid
+from roll_probabilities import calculate_roll_probabilities, save_prob_dfs, roll_type_prob_grid, points_scoring_prob_grid
+from expected_roll_value import get_roll_evs
 
 SIMS = 20_000
 thresholds = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000]
 index = 4
 
 def main():
-    
-    simulated_prob_grid()
-    theoretical_prob_grid()
+
+    '''roll_type_prob_df, points_scoring_prob_df = calculate_roll_probabilities()
+    save_prob_dfs(roll_type_prob_df, points_scoring_prob_df)
+    '''
+    #roll_probs = pd.read_csv("Roll Type Probabilities.csv", index_col=0)
+    scoring_prob = pd.read_csv("Probability of Scoring Points.csv", index_col=0)
+
+    #roll_type_prob_grid(roll_probs)
+    points_scoring_prob_grid(scoring_prob)
+    #get_roll_evs(roll_probs)
 
     """winners_dict = {"One": 0, "Two": 0, "Three": 0, "Four": 0, "Five": 0, "Six": 0}
     for _ in range(SIMS):
