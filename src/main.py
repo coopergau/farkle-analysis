@@ -1,12 +1,17 @@
 from player import Player
 from game import Game
-from roll_probabilities import prob_grid
+from roll_probabilities import prob_grid, roll_sims
 
 SIMS = 20_000
 thresholds = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000]
 index = 4
 
 def main():
+    
+    roll_counter, points_occured = roll_sims(1_000_000, 1)
+    print(roll_counter)
+    print(points_occured)
+
     prob_grid()
 
     """winners_dict = {"One": 0, "Two": 0, "Three": 0, "Four": 0, "Five": 0, "Six": 0}
