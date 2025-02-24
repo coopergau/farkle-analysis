@@ -97,7 +97,38 @@ def four_of_a_kind_with_pair(dice: int):
         favourable_outcomes = arrangements * two_number_options
         return favourable_outcomes / total_outcomes
 
-# Simulations for comparing to theoretical probabilities and for finding points vs. no points probabilities
+def theoretical_prob_grid():
+    """
+    Creates a probability grid to visualize the probabilities of 
+    each roll depending on how many dice are being rolled.
+    """
+    dice_amounts = range(6, 0, -1)
+    at_least_a_one = [one_or_five_prob(dice) for dice in dice_amounts]
+    at_least_a_five = at_least_a_one
+    three_of_a_kind = [x_of_a_kind(3, dice) for dice in dice_amounts]
+    four_of_a_kind = [x_of_a_kind(4, dice) for dice in dice_amounts]
+    five_of_a_kind = [x_of_a_kind(5, dice) for dice in dice_amounts]
+    six_of_a_kind = [x_of_a_kind(6, dice) for dice in dice_amounts]
+    four_with_pair = [four_of_a_kind_with_pair(dice) for dice in dice_amounts]
+    three_pairs = [three_doubles(dice) for dice in dice_amounts]
+    straight = [straight_prob(dice) for dice in dice_amounts]
+    two_triples = [two_triples_prob(dice) for dice in dice_amounts]
+
+    data = np.array([two_triples, straight, three_pairs, four_with_pair, six_of_a_kind,
+                     five_of_a_kind, four_of_a_kind, three_of_a_kind, at_least_a_one, at_least_a_five])
+
+    plt.figure(figsize=(5, 6)) 
+
+    sns.heatmap(data, annot=True, cmap="viridis", linewidths=0.5, fmt=".2%",
+            xticklabels=range(6, 0, -1), yticklabels=["Two Triples", "Straight", "Three Pairs", "Four of a Kind with a Pair", "Six of a Kind",
+                                                      "Five of a Kind", "Four of a Kind", "Three of a Kind", "At least a 1", "At least a 5"])
+   
+    plt.xlabel("Number of Dice Rolled")
+    plt.ylabel("Type of Roll")
+    plt.title("Theoretical Farkle Roll Probabilities")
+    plt.show(block=True)
+
+# Simulations for finding estimates of actual probabilities and for finding points vs. no points probabilities
 def categorize_roll(roll: list):
     """
     Very similar to the score_roll function in player.py.
@@ -172,26 +203,46 @@ def roll_sims(sims: int, dice: int):
     
     return roll_counter, points_occured
     
-
-def prob_grid():
+def simulated_prob_grid():
     """
     Creates a probability grid to visualize the probabilities of 
     each roll depending on how many dice are being rolled.
+    But uses the simulated rolls.
     """
     dice_amounts = range(6, 0, -1)
-    at_least_a_one = [one_or_five_prob(dice) for dice in dice_amounts]
-    at_least_a_five = at_least_a_one
-    three_of_a_kind = [x_of_a_kind(3, dice) for dice in dice_amounts]
-    four_of_a_kind = [x_of_a_kind(4, dice) for dice in dice_amounts]
-    five_of_a_kind = [x_of_a_kind(5, dice) for dice in dice_amounts]
-    six_of_a_kind = [x_of_a_kind(6, dice) for dice in dice_amounts]
-    four_with_pair = [four_of_a_kind_with_pair(dice) for dice in dice_amounts]
-    three_pairs = [three_doubles(dice) for dice in dice_amounts]
-    straight = [straight_prob(dice) for dice in dice_amounts]
-    two_triples = [two_triples_prob(dice) for dice in dice_amounts]
+    one = []
+    five = []
+    triple = []
+    four_of_a_kind = []
+    five_of_a_kind = []
+    six_of_a_kind = []
+    four_with_pair = []
+    three_pairs = []
+    straight = []
+    two_triples = []
 
+    list_mapping = {
+        "one": one,
+        "five": five,
+        "triple": triple,
+        "four_of_a_kind": four_of_a_kind,
+        "five_of_a_kind": five_of_a_kind,
+        "six_of_a_kind": six_of_a_kind,
+        "four_with_pair": four_with_pair,
+        "three_pairs": three_pairs,
+        "straight": straight,
+        "two_triples": two_triples,
+    }
+
+    rolls = 1_000_000
+    for dice in dice_amounts:
+        roll_counter, _ = roll_sims(rolls, dice)
+        for key, value in roll_counter.items():
+            list_mapping[key].append(value)
+    
     data = np.array([two_triples, straight, three_pairs, four_with_pair, six_of_a_kind,
-                     five_of_a_kind, four_of_a_kind, three_of_a_kind, at_least_a_one, at_least_a_five])
+                     five_of_a_kind, four_of_a_kind, triple, one, five])
+    data = data / rolls
 
     plt.figure(figsize=(5, 6)) 
 
@@ -201,5 +252,5 @@ def prob_grid():
    
     plt.xlabel("Number of Dice Rolled")
     plt.ylabel("Type of Roll")
-    plt.title("Farkle Roll Probabilities")
-    plt.show()
+    plt.title("Simulated Farkle Roll Probabilities")
+    plt.show(block=False)
