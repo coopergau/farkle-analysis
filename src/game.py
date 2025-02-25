@@ -49,7 +49,5 @@ class Game:
         while not game_over:
             self.play_round()
             game_over, winner = self.check_for_winner()
-            print(self)
         self.winner = winner
-        print(self)
     
