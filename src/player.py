@@ -58,7 +58,8 @@ def score_roll(roll: list):
     return points, leftover_dice
 
 class Player:
-    def __init__(self, name: str, min_dice: int, bank_threshold: int, strategy: str, ev_table: pd.DataFrame=None, not_farkle_table: pd.DataFrame=None):
+    def __init__(self, name: str, min_dice: int, bank_threshold: int, strategy: str, 
+                ev_table: pd.DataFrame=None, not_farkle_table: pd.DataFrame=None, staggered_thresholds: dict=None):
         """
         Player strategy variables:
         min_dice: Minimum amount of dice they will roll, bank points otherwise.
@@ -71,6 +72,7 @@ class Player:
         self.strategy = strategy
         self.ev_table = ev_table
         self.not_farkle_table = not_farkle_table
+        self.staggered_thresholds = staggered_thresholds
         self.score = 0
         self.turn_score = 0
 
@@ -99,8 +101,10 @@ class Player:
             if dice == 0:
                 dice = 6
                 continue
+
             # Choose to bank if turn points is high enough or amount of dice left is too small
-            if self.turn_score >= self.bank_threshold or dice < self.min_dice:
+            # points == 0 indicates a farkle
+            elif points == 0 or self.turn_score >= self.bank_threshold or dice < self.min_dice:
                 self.update_score_and_end_turn()
                 turn_over = True
 
@@ -122,11 +126,34 @@ class Player:
                 continue
 
             # Choose to bank or roll
+            # points == 0 indicates a farkle
             prob_no_farkle = self.not_farkle_table[str(dice)].values[0]
             expected_total_points = self.turn_score + self.ev_table[dice].values[0]
             risk_adjusted_expected_points = prob_no_farkle * expected_total_points
 
-            if risk_adjusted_expected_points <= self.turn_score:
+            if points == 0 or risk_adjusted_expected_points <= self.turn_score:
+                self.update_score_and_end_turn()
+                turn_over = True
+    
+    def staggered_turn(self):
+        """
+        Rolls dice if turn points are less than a certain threshold that is different
+        for each amount of dice left to roll.
+        """
+        dice = 6
+        turn_over = False
+        while not turn_over:
+            rolled_dice = roll(dice)
+            points, dice = score_roll(rolled_dice)
+            self.update_turn_score(points)
+
+            if dice == 0:
+                dice = 6
+                continue
+
+            # Choose to bank if turn points is high enough based on how many dice are left
+            # points == 0 indicates a farkle
+            if points == 0 or self.turn_score >= self.staggered_thresholds[dice]:
                 self.update_score_and_end_turn()
                 turn_over = True
 
@@ -135,3 +162,5 @@ class Player:
             self.basic_turn()
         elif self.strategy == "ev table":
             self.ev_table_turn()
+        elif self.strategy == "staggered":
+            self.staggered_turn()
